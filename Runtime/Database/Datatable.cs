@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace MyFw.DB
+namespace MyFw.DS
 {
     /// <summary>
     /// データテーブルインターフェース.
