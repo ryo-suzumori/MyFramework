@@ -37,7 +37,7 @@ namespace MyFw
 
             var total = classList.Sum(c => c.Probability);
             var sorted = classList.OrderBy(c => c.Probability);
-            var value = UnityEngine.Random.Range(0, total);
+            var value = UnityEngine.Random.Range(0, total) + 1;
 
             foreach (var c in sorted)
             {

@@ -42,9 +42,9 @@ namespace MyFw
         [Serializable]
         private class TimeScaleContext
         {
-            [SerializeField] string key;
-            [SerializeField] float timeScale;
-            [SerializeField] float runningTime;
+            [SerializeField] private string key;
+            [SerializeField] private float timeScale;
+            [SerializeField] private float runningTime;
 
             public string Key => this.key;
             public float TimeScale => this.timeScale;
@@ -52,7 +52,7 @@ namespace MyFw
         }
 
         /// <summary>
-        /// TimeScalePresenterBase
+        /// TimeScalePresenter
         /// </summary>
         private class TimeScalePresenter : ITimeScaler, IDisposable
         {
@@ -78,21 +78,24 @@ namespace MyFw
                 var execTime = data.TimeScale * data.RunningTime;
                 Time.timeScale = data.TimeScale;
 
-                this.timerDisposable?.Dispose();
-                this.timerDisposable = Observable.Timer(TimeSpan.FromSeconds(execTime))
-                    .Subscribe(_ => Time.timeScale = 1.0f);
-
+                if (execTime > 0f)
+                {
+                    this.timerDisposable?.Dispose();
+                    this.timerDisposable = Observable.Timer(TimeSpan.FromSeconds(execTime))
+                        .Subscribe(_ => Time.timeScale = 1.0f);
+                }
                 return execTime;
             }
 
             public void ForceReset()
             {
+                Time.timeScale = 1.0f;
                 this.timerDisposable?.Dispose();
             }
 
             public void Dispose()
             {
-                this.timerDisposable?.Dispose();
+                ForceReset();
             }
         }
     }

@@ -12,21 +12,14 @@ namespace MyFw
         /// <param name="durationSeccond"></param>
         public static IObservable<float> CreateLerp(float durationSeccond)
         {
-            return UniRx.Observable.Create<float>(observer =>
-            {
-                float elapsed = 0;
-                return UniRx.Observable.IntervalFrame(2)
-                    .Subscribe(e =>
-                    {
-                        elapsed += Time.deltaTime;
-                        observer.OnNext(Mathf.Clamp01(elapsed / durationSeccond));
-                        if (elapsed > durationSeccond)
-                        {
-                            observer.OnCompleted();
-                        }
-                    });
-            });
-        }
+            var elapsed = 0f;
 
+            return Observable.EveryEndOfFrame()
+                .Do(_ => elapsed += Time.deltaTime)
+                .Select(t => Mathf.Clamp01(1f - (durationSeccond - elapsed) / durationSeccond))
+                .TakeUntil(Observable.Timer(TimeSpan.FromSeconds(durationSeccond)))
+                .Concat(Observable.Return(1f))
+                .DistinctUntilChanged();
+        }
     }
 }

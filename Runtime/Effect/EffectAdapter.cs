@@ -10,12 +10,17 @@ namespace MyFw.Eff
     /// </summary>
     public class EffectAdapter : MonoBehaviour, IPoolable<IMemoryPool>, IDisposable
     {
-        private IMemoryPool ownerPool;
-        private readonly List<ICallback_OnPlay> onPlayList = new List<ICallback_OnPlay>();
-        private readonly List<ICallback_OnEnd> onEndList = new List<ICallback_OnEnd>();
+        [SerializeField]
+        private List<ParticleSystem> particles = new();
+        public IReadOnlyList<ParticleSystem> Particles => this.particles;
 
+        private IMemoryPool ownerPool;
+        private readonly List<ICallback_OnPlay> onPlayList = new();
+        private readonly List<ICallback_OnEnd> onEndList = new();
+        
         public virtual void Reset()
         {
+            this.particles = new(GetComponentsInChildren<ParticleSystem>());
         }
 
         public void Awake()

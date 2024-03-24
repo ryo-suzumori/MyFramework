@@ -20,16 +20,14 @@ namespace MyFw.Eff
     /// </summary>
     public class EffectService : IDisposable, IInitializable, ISpawner
     {
-        private readonly List<PoolFactory> poolFactory = null;
-        private readonly GameObject effectRoot = null;
-
+        private readonly List<PoolFactory> poolFactory;
+        
+        [Inject]
         public EffectService(
-            [Inject] List<PoolFactory> poolFactory,
-            [Inject(Id = "EffectRoot")] GameObject effRoot
+            List<PoolFactory> poolFactory
         )
         {
             this.poolFactory = poolFactory;
-            this.effectRoot = effRoot;
         }
 
         public void Initialize()
@@ -38,16 +36,6 @@ namespace MyFw.Eff
 
         public void Dispose()
         {
-        }
-
-        /// <summary>
-        /// 有効なエフェクトを検索.
-        /// </summary>
-        /// <param name="tag"></param>
-        /// <returns></returns>
-        public EffectAdapter[] FindEffects()
-        {
-            return this.effectRoot.GetComponentsInChildren<EffectAdapter>();
         }
 
         /// <summary>

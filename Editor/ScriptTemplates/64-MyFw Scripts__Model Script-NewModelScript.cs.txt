@@ -1,0 +1,17 @@
+using System;
+
+#ROOTNAMESPACEBEGIN#
+    /// <summary>
+    /// #SCRIPTNAME#
+    /// </summary>
+    public class #SCRIPTNAME# : IDisposable
+    {
+        public void Setup()
+        {
+        }
+
+        public void Dispose()
+        {
+        }
+    }
+#ROOTNAMESPACEEND#

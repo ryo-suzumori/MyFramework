@@ -1,0 +1,36 @@
+using System.Linq;
+using System.Collections.Generic;
+
+using MyFw.DS;
+
+
+#ROOTNAMESPACEBEGIN#
+    /// <summary>
+    /// #SCRIPTNAME# 公開用インターフェース.
+    /// </summary>
+    public interface I#SCRIPTNAME#Data : IDataRow
+    {
+    }
+
+    /// <summary>
+    /// #SCRIPTNAME# 行データ
+    /// </summary>
+    public class #SCRIPTNAME#Data : I#SCRIPTNAME#Data
+    {
+    }
+
+    /// <summary>
+    /// #SCRIPTNAME# 公開用アクセサインターフェース.
+    /// </summary>
+    public interface I#SCRIPTNAME#Accessor
+    {
+    }
+
+    /// <summary>
+    /// #SCRIPTNAME# マスタークラス
+    /// </summary>
+    public class #SCRIPTNAME#Master : Datatable<#SCRIPTNAME#Data>, I#SCRIPTNAME#Accessor
+    {
+        protected override string CsvPath => "Masters/m_track_context";
+    }
+#ROOTNAMESPACEEND#

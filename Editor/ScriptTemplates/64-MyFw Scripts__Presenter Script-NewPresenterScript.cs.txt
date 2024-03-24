@@ -1,0 +1,24 @@
+using System;
+using Zenject;
+
+#ROOTNAMESPACEBEGIN#
+    /// <summary>
+    /// #SCRIPTNAME#
+    /// </summary>
+    public class #SCRIPTNAME# : IInitializable, IDisposable
+    {
+        [Inject]
+        public #SCRIPTNAME#(
+        )
+        {
+        }
+
+        public void Initialize()
+        {
+        }
+
+        public void Dispose()
+        {
+        }
+    }
+#ROOTNAMESPACEEND#

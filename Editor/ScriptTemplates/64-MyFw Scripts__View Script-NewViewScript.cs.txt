@@ -1,0 +1,15 @@
+using System;
+using UniRx;
+using UnityEngine;
+
+#ROOTNAMESPACEBEGIN#
+    /// <summary>
+    /// #SCRIPTNAME# view class
+    /// </summary>
+    public class #SCRIPTNAME# : MonoBehaviour
+    {
+        public void Awake()
+        {
+        }
+    }
+#ROOTNAMESPACEEND#

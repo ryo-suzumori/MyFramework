@@ -24,33 +24,51 @@ namespace MyFw.Eff
         }
 
         /// <summary>
+        /// プレハブ読み込み先ルートパス.
+        /// </summary>
+        [SerializeField] private string prefabRootPath;
+
+        /// <summary>
+        /// ワールド座標系のエフェクトルートクラス.
+        /// </summary>
+        [SerializeField] private string worldRootObjectName;
+
+        /// <summary>
         /// 設定配列.
         /// </summary>
-        [SerializeField] private List<EffectPoolContext> contextList = new List<EffectPoolContext>();
+        [SerializeField] private List<EffectPoolContext> worldContextList = new();
 
         /// <summary>
-        /// ルートオブジェクト保存用.
+        /// ワールド座標系のエフェクトルートクラス.
         /// </summary>
-        private GameObject rootObject;
+        [SerializeField] private string canvasRootObjectName;
 
         /// <summary>
-        /// エフェクトルートのオブジェクト名.
+        /// 設定配列.
         /// </summary>
-        private const string ObjectName = "EffectRoot";
+        [SerializeField] private List<EffectPoolContext> canvasContextList = new();
+
+        private Transform worldRootTransform;
+        private Transform canvasRootTransform;
 
         /// <summary>
         /// インストール実行
         /// </summary>
         public override void InstallBindings()
         {
-            var gameObject = GameObject.Find(ObjectName);
-            this.rootObject = gameObject != null ? gameObject : new GameObject(ObjectName);
-            this.contextList.ForEach(BindPoolStretch);
+            this.worldRootTransform = GameObject.Find(this.worldRootObjectName).transform;
+            foreach(var context in this.worldContextList)
+            {
+                BindPoolStretch(this.worldRootTransform, context);
+            }
 
-            Container.Bind<GameObject>()
-                .WithId(ObjectName)
-                .FromInstance(this.rootObject);
-
+            var temp = GameObject.Find(this.canvasRootObjectName);
+            this.canvasRootTransform = temp.transform;
+            foreach (var context in this.canvasContextList)
+            {
+                BindCanavsPoolStretch(this.canvasRootTransform, context);
+            }
+            
             Container.BindInterfacesAndSelfTo<EffectService>()
                 .FromNew()
                 .AsSingle();
@@ -62,19 +80,46 @@ namespace MyFw.Eff
         /// <param name="key"></param>
         /// <param name="prefubPath"></param>
         /// <param name="minPoolSize"></param行.>
-        private void BindPoolStretch(EffectPoolContext context)
+        private void BindPoolStretch(Transform trans, EffectPoolContext context)
         {
             // root
             var name = Path.GetFileName(context.prefubPath);
             var poolRoot = new GameObject($"{name}").transform;
-            poolRoot.SetParent(this.rootObject.transform);
+            poolRoot.SetParent(trans);
 
             Container.BindFactory<EffectAdapter, PoolFactory>()
                 .WithFactoryArguments(name) // ファクトリに識別キーを送る.
                 .FromMonoPoolableMemoryPool(pool =>
                     pool.WithInitialSize(context.minPoolSize)
                         .WithMaxSize(context.maxPoolSize)
-                        .FromComponentInNewPrefabResource(context.prefubPath)
+                        .FromComponentInNewPrefabResource($"{this.prefabRootPath}/{context.prefubPath}")
+                        .UnderTransform(poolRoot)
+                    );
+        }
+
+        /// <summary>
+        /// プールのバインド.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="prefubPath"></param>
+        /// <param name="minPoolSize"></param行.>
+        private void BindCanavsPoolStretch(Transform trans, EffectPoolContext context)
+        {
+            // root
+            var name = Path.GetFileName(context.prefubPath);
+            var poolRoot = new GameObject($"{name}")
+                .AddComponent<RectTransform>()
+                .transform;
+            poolRoot.SetParent(trans);
+            poolRoot.localPosition = Vector3.zero;
+            poolRoot.localScale = Vector3.one;
+
+            Container.BindFactory<EffectAdapter, PoolFactory>()
+                .WithFactoryArguments(name) // ファクトリに識別キーを送る.
+                .FromMonoPoolableMemoryPool(pool =>
+                    pool.WithInitialSize(context.minPoolSize)
+                        .WithMaxSize(context.maxPoolSize)
+                        .FromComponentInNewPrefabResource($"{this.prefabRootPath}/{context.prefubPath}")
                         .UnderTransform(poolRoot)
                     );
         }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -24,6 +25,7 @@ namespace MyFw.DS
     {
     }
 
+    
     /// <summary>
     /// データテーブルクラス.
     ///
@@ -64,7 +66,7 @@ namespace MyFw.DS
         /// <summary>
         /// 読込済みデータ本体.
         /// </summary>
-        protected readonly List<DataStructre> dataList = new List<DataStructre>();
+        protected readonly List<DataStructre> dataList = new();
 
         /// <summary>
         /// コンストラクタ.
@@ -89,8 +91,8 @@ namespace MyFw.DS
 
             var propertieList= typeof(DataStructre).GetProperties();
 
-            try
-            {
+            //try
+            //{
 #if DEBUG
                 Validation(splitedDataList, propertieList);
 #endif
@@ -115,11 +117,11 @@ namespace MyFw.DS
 
                     this.dataList.Add(dataStructre);
                 }
-            }
-            catch(Exception e)
-            {
-                Debug.LogError(e.Message);
-            }
+            //}
+            //catch(Exception e)
+            //{
+            //    Debug.LogError(e.Message);
+            //}
         }
 
         /// <summary>
