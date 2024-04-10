@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
@@ -18,15 +17,10 @@ namespace MyFw.Eff
         [Serializable]
         private struct EffectPoolContext
         {
-            public string prefubPath;
+            public GameObject prefubPath;
             public int minPoolSize;
             public int maxPoolSize;
         }
-
-        /// <summary>
-        /// プレハブ読み込み先ルートパス.
-        /// </summary>
-        [SerializeField] private string prefabRootPath;
 
         /// <summary>
         /// ワールド座標系のエフェクトルートクラス.
@@ -83,7 +77,7 @@ namespace MyFw.Eff
         private void BindPoolStretch(Transform trans, EffectPoolContext context)
         {
             // root
-            var name = Path.GetFileName(context.prefubPath);
+            var name = context.prefubPath.name;
             var poolRoot = new GameObject($"{name}").transform;
             poolRoot.SetParent(trans);
 
@@ -92,7 +86,7 @@ namespace MyFw.Eff
                 .FromMonoPoolableMemoryPool(pool =>
                     pool.WithInitialSize(context.minPoolSize)
                         .WithMaxSize(context.maxPoolSize)
-                        .FromComponentInNewPrefabResource($"{this.prefabRootPath}/{context.prefubPath}")
+                        .FromComponentInNewPrefab(context.prefubPath)
                         .UnderTransform(poolRoot)
                     );
         }
@@ -106,7 +100,7 @@ namespace MyFw.Eff
         private void BindCanavsPoolStretch(Transform trans, EffectPoolContext context)
         {
             // root
-            var name = Path.GetFileName(context.prefubPath);
+            var name = context.prefubPath.name;
             var poolRoot = new GameObject($"{name}")
                 .AddComponent<RectTransform>()
                 .transform;
@@ -119,7 +113,7 @@ namespace MyFw.Eff
                 .FromMonoPoolableMemoryPool(pool =>
                     pool.WithInitialSize(context.minPoolSize)
                         .WithMaxSize(context.maxPoolSize)
-                        .FromComponentInNewPrefabResource($"{this.prefabRootPath}/{context.prefubPath}")
+                        .FromComponentInNewPrefab(context.prefubPath)
                         .UnderTransform(poolRoot)
                     );
         }
