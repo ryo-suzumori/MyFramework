@@ -5,7 +5,7 @@ namespace MyFw
 {
     public class ScreenshotMenu
     {
-        [MenuItem("Tools/Screenshot PNG保存 #%F11")]
+        [MenuItem("MFTools/Screenshot PNG保存 #%F11")]
         public static void ScreenshotAsPNG()
         {
             var time = System.DateTime.Now;
