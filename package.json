@@ -1,7 +1,7 @@
 {
   "name": "com.myframework",
   "displayName": "MyFramework",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "unity": "2020.1",
   "description": "my framework package",
   "author": {

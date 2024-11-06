@@ -6,7 +6,7 @@ using UnityEngine.Networking;
 using UnityEditor;
 
 
-namespace SStar
+namespace MyFw
 {
     public class EditorMasterSyncWindow : EditorWindow
     {
@@ -43,7 +43,7 @@ namespace SStar
                 this.config.sheetNameList.Add("");
             }
 
-            for( var index = 0; index < this.config.sheetNameList.Count; ++index)
+            for (var index = 0; index < this.config.sheetNameList.Count; ++index)
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
@@ -60,12 +60,21 @@ namespace SStar
             GUILayout.Box("", GUILayout.Height(2), GUILayout.ExpandWidth(true));
 
             this.config.outputDir = EditorGUILayout.DelayedTextField("OutputDirectory", this.config.outputDir);
-            if (GUILayout.Button("Run Sync"))
+
+            if (GUILayout.Button("Run Download Csv"))
             {
-                foreach(var sheetName in this.config.sheetNameList)
-                {
-                    RunSync(this.config.sheetId, this.config.outputDir, sheetName).Forget();
-                }
+                RunSyncAll().Forget();
+            }
+
+            GUILayout.Box("", GUILayout.Height(2), GUILayout.ExpandWidth(true));
+
+            this.config.nameSpace = EditorGUILayout.DelayedTextField("Namespace", this.config.nameSpace);
+            this.config.scriptDir = EditorGUILayout.DelayedTextField("ScriptDirectory", this.config.scriptDir);
+
+            if (GUILayout.Button("Run Master Script Build"))
+            {
+                var builder = new MasterClassBuilder();
+                builder.Build(this.config);
             }
 
             // 変更を検知した場合、設定ファイルに戻す
@@ -76,7 +85,25 @@ namespace SStar
             }
         }
 
-        private static async UniTask RunSync(string sheetId, string outputDir, string sheetName)
+        private async UniTaskVoid RunSyncAll()
+        {
+            Debug.Log("===== Start Sync =====");
+
+            if (!Directory.Exists(this.config.outputDir))
+            {
+                Directory.CreateDirectory(this.config.outputDir);
+            }
+
+            for (var i = 0; i < this.config.sheetNameList.Count; ++i)
+            {
+                await RunSync(this.config.sheetId, this.config.outputDir, this.config.sheetNameList[i]);
+            }
+            AssetDatabase.Refresh();
+
+            Debug.Log("===== End Sync =====");
+        }
+
+        private async UniTask RunSync(string sheetId, string outputDir, string sheetName)
         {
             var url = $"https://docs.google.com/spreadsheets/d/{sheetId}/gviz/tq?tqx=out:csv&sheet={sheetName}";
             var request = UnityWebRequest.Get(url);
@@ -89,9 +116,8 @@ namespace SStar
             else
             {
                 Debug.Log($"{sheetName} : sync");
-                var sw = new StreamWriter($"{outputDir}/{sheetName}.csv", false, Encoding.UTF8);
-                sw.Write(request.downloadHandler.text.Replace("\"", ""));
-                sw.Close();
+                using var sw = new StreamWriter($"{outputDir}/{sheetName}.csv", false, Encoding.UTF8);
+                sw.Write(request.downloadHandler.text);
             }
         }
     }

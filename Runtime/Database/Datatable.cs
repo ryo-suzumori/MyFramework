@@ -73,7 +73,7 @@ namespace MyFw.DS
         /// </summary>
         protected Datatable()
         {
-            LoadDatabase();
+            LoadEx();
         }
 
         /// <summary>
@@ -124,6 +124,55 @@ namespace MyFw.DS
             //}
         }
 
+        protected void LoadEx()
+        {
+            Debug.Log($"loadex to {this.CsvPath}");
+            var textAsset = LoadCSV();
+            Assert.IsNotNull(textAsset, $"{this.CsvPath} is not found!!");
+
+            var textData = textAsset.text.Replace("\"", "");
+            var splitedDataList = StringUtility.SplitFromCSVText(textData);
+            Assert.IsNotNull(splitedDataList, $"{this.CsvPath} is not CSV format!!");
+
+            var datatable = new DataTableContext();
+            datatable.SetHeader(splitedDataList[0]);
+
+            var rowIdx = 0;
+            foreach(var rowData in splitedDataList.Skip(1))
+            {
+                var dataStructre = new DataStructre();
+                var colmunIdx = 0;
+                foreach(var colmun in datatable.colmunContexts)
+                {
+                    if (string.IsNullOrEmpty(colmun.name))
+                    {
+                        ++colmunIdx;
+                        continue;
+                    }
+
+                    var feild = typeof(DataStructre).GetField(colmun.FieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+                    switch (colmun.typeName)
+                    {
+                        case "String":
+                            feild.SetValue(dataStructre, rowData[colmunIdx]);
+                            break;
+                        case "Boolean":
+                            feild.SetValue(dataStructre, Boolean.TryParse(rowData[colmunIdx], out var retBoolean) ? retBoolean : false);
+                            break;
+                        case "Int32":
+                        default:
+                            feild.SetValue(dataStructre, Int32.TryParse(rowData[colmunIdx], out var retOther) ? retOther : 0);
+                            break;
+                    }
+                    ++colmunIdx;
+                }
+                this.dataList.Add(dataStructre);
+                ++rowIdx;
+            }
+
+            Debug.Log($"{CsvPath} [{rowIdx}]");
+        }
+
         /// <summary>
         /// 整合性チェック.
         /// </summary>
@@ -133,7 +182,7 @@ namespace MyFw.DS
         {
             if (splitedDataList[0].Length != propertieList.Length)
             {
-                throw new Exception($"colmun count is not match!! [{this.CsvName}] csv:{splitedDataList[0].Length} class:{propertieList.Length}");
+                throw new Exception($"colmun count is not match!! [{this.CsvPath}] csv:{splitedDataList[0].Length} class:{propertieList.Length}");
             }
         }
 

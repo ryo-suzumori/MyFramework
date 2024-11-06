@@ -1,7 +1,4 @@
 using System;
-using System.Collections;
-
-using UnityEngine;
 using UnityEngine.SceneManagement;
 using Cysharp.Threading.Tasks;
 
@@ -10,16 +7,8 @@ namespace MyFw
     /// <summary>
     /// SceneManagementModel
     /// </summary>
-    public class SceneManagementModel : IDisposable
+    public class SceneManagementModel
     {
-        public void Setup()
-        {
-        }
-
-        public void Dispose()
-        {
-        }
-
         public async UniTaskVoid LoadSceneAsync(string sceneName)
         {
             // シーンを非同期で読み込む
@@ -29,6 +18,13 @@ namespace MyFw
 
             // 読み込みが完了したらシーンをアクティブにする
             SceneManager.SetActiveScene(SceneManager.GetSceneByName(sceneName));
+        }
+
+        public async UniTask<Scene> LoadSceneAddtiveAsync(string sceneName)
+        {
+            // シーンを非同期で読み込む
+            await SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+            return SceneManager.GetSceneByName(sceneName);
         }
     }
 }

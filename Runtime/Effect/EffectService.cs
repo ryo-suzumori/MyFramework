@@ -47,6 +47,12 @@ namespace MyFw.Eff
         public EffectAdapter Spwan(string key, Vector3 pos)
         {
             var pool = this.poolFactory.FirstOrDefault(p => p.Key == key);
+            if (pool == null)
+            {
+                Debug.LogError($"this key is not found!! [{key}]");
+                return null;
+            }
+
             var ef = pool?.Create();
             if (ef != null) {
                 ef.transform.position = pos;

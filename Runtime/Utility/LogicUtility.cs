@@ -50,5 +50,11 @@ namespace MyFw
 
             return sorted.Last();
         }
+
+        public static Class GetRandom<Class>(IEnumerable<Class> classList)
+        {
+            var count = classList.Count();
+            return classList.ElementAt(UnityEngine.Random.Range(0, count));
+        }
     }
 }
