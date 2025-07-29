@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -73,60 +72,15 @@ namespace MyFw.DS
         /// </summary>
         protected Datatable()
         {
-            LoadEx();
+            LoadDatabaseFromCSV();
         }
 
         /// <summary>
         /// データベース読み込み.
         /// </summary>
-        protected void LoadDatabase()
+        protected void LoadDatabaseFromCSV()
         {
             Debug.Log($"load to {this.CsvPath}");
-            var textAsset = LoadCSV();
-            Assert.IsNotNull(textAsset, $"{this.CsvPath} is not found!!");
-
-            var textData = Regex.Replace(textAsset.text, "^#.*\n", "");
-            var splitedDataList = StringUtility.SplitFromCSVText(textData);
-            Assert.IsNotNull(splitedDataList, $"{this.CsvPath} is not CSV format!!");
-
-            var propertieList= typeof(DataStructre).GetProperties();
-
-            //try
-            //{
-#if DEBUG
-                Validation(splitedDataList, propertieList);
-#endif
-                foreach (var splitedData in splitedDataList)
-                {
-                    var dataStructre = new DataStructre();
-                    var colmunIndex = 0;
-                    foreach (var info in propertieList)
-                    {
-                        // Debug.Log(info.Name + " code:" + Type.GetTypeCode(info.GetMethod.ReturnType) + " value:" + splitedData[colmunIndex]);
-                        switch (Type.GetTypeCode(info.GetMethod.ReturnType))
-                        {
-                            case TypeCode.Int32:
-                                info.SetValue(dataStructre, int.TryParse(splitedData[colmunIndex], out var tempValue) ? tempValue : 0);
-                                break;
-                            case TypeCode.String:
-                                info.SetValue(dataStructre, splitedData[colmunIndex]);
-                                break;
-                        }
-                        ++colmunIndex;
-                    }
-
-                    this.dataList.Add(dataStructre);
-                }
-            //}
-            //catch(Exception e)
-            //{
-            //    Debug.LogError(e.Message);
-            //}
-        }
-
-        protected void LoadEx()
-        {
-            Debug.Log($"loadex to {this.CsvPath}");
             var textAsset = LoadCSV();
             Assert.IsNotNull(textAsset, $"{this.CsvPath} is not found!!");
 
@@ -153,11 +107,17 @@ namespace MyFw.DS
                     var feild = typeof(DataStructre).GetField(colmun.FieldName, BindingFlags.NonPublic | BindingFlags.Instance);
                     switch (colmun.typeName)
                     {
+                        case "IPercent":
+                            feild.SetValue(dataStructre, new Percent(Int32.TryParse(rowData[colmunIdx], out var retPercent) ? retPercent : 0));
+                            break;
                         case "String":
                             feild.SetValue(dataStructre, rowData[colmunIdx]);
                             break;
                         case "Boolean":
                             feild.SetValue(dataStructre, Boolean.TryParse(rowData[colmunIdx], out var retBoolean) ? retBoolean : false);
+                            break;
+                        case "UInt32":
+                            feild.SetValue(dataStructre, UInt32.TryParse(rowData[colmunIdx], out var retUInt32) ? retUInt32 : 0);
                             break;
                         case "Int32":
                         default:
@@ -169,8 +129,6 @@ namespace MyFw.DS
                 this.dataList.Add(dataStructre);
                 ++rowIdx;
             }
-
-            Debug.Log($"{CsvPath} [{rowIdx}]");
         }
 
         /// <summary>
@@ -199,7 +157,7 @@ namespace MyFw.DS
         public void ReloadDatabase()
         {
             this.dataList.Clear();
-            LoadDatabase();
+            LoadDatabaseFromCSV();
         }
 #endif
     }

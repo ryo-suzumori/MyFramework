@@ -80,6 +80,8 @@ namespace MyFw.Eff
             var name = context.prefubPath.name;
             var poolRoot = new GameObject($"{name}").transform;
             poolRoot.SetParent(trans);
+            trans.localPosition = Vector3.zero;
+            poolRoot.localPosition = Vector3.zero;
 
             Container.BindFactory<EffectAdapter, PoolFactory>()
                 .WithFactoryArguments(name) // ファクトリに識別キーを送る.

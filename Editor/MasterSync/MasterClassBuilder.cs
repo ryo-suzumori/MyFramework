@@ -1,13 +1,10 @@
 using System.IO;
 using System.Text;
-using System.Collections.Generic;
 using System.CodeDom;
 using System.CodeDom.Compiler;
 using Microsoft.CSharp;
-
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEditor;
 
 namespace MyFw
 { 
@@ -23,9 +20,7 @@ namespace MyFw
                 var path = $"{config.outputDir}/{sheetName}.csv";
                 using var sr = new StreamReader(path, Encoding.UTF8);
                 var textBody = sr.ReadToEnd();
-                //Assert.IsNotNull(textAsset, $"{this.CsvPath} is not found!!");
 
-                //var textData = Regex.Replace(textBody, "^#.*\n", "");
                 var splitedDataList = StringUtility.SplitFromCSVText(textBody);
                 Assert.IsNotNull(splitedDataList, $"{path} is not CSV format!!");
 

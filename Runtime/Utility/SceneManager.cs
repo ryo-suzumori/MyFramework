@@ -23,7 +23,7 @@ namespace MyFw
         public async UniTask<Scene> LoadSceneAddtiveAsync(string sceneName)
         {
             // シーンを非同期で読み込む
-            await SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+            await SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single).ToUniTask();
             return SceneManager.GetSceneByName(sceneName);
         }
     }
