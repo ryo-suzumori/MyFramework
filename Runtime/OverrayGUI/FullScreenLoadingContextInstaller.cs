@@ -10,7 +10,7 @@ namespace MyFw
     public class FullScreenLoadingSignal
     {
         public string key;
-        public IObservable<Unit> OnDestory;
+        public IObservable<Unit> OnDestroy;
     }
 
     /// <summary>
@@ -75,9 +75,9 @@ namespace MyFw
             gui.transform.SetParent(canvas);
             gui.transform.localScale = Vector3.one;
 
-            if (signal.OnDestory != null)
+            if (signal.OnDestroy != null)
             {
-                signal.OnDestory
+                signal.OnDestroy
                     .Subscribe(id => gui.DestroySelf())
                     .AddTo(gui);
             }

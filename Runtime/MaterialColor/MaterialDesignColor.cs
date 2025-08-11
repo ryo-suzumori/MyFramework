@@ -3,10 +3,15 @@ using UnityEngine.UI;
 
 namespace MyFw
 {
-    public class MaterialDesignColorComponent : MonoBehaviour
+    public interface IColorSettable
     {
-        [SerializeField] private MaterialColorKey materialColor = MaterialColorKey.Blue;
-        [SerializeField] private MaterialColorWeight colorWeight = MaterialColorWeight._500;
+        public Color Color { get; set; }
+    }
+
+    public class MaterialDesignColor : MonoBehaviour
+    {
+        [SerializeField] private MaterialColorKey materialColor = MaterialColorKey.Grey;
+        [SerializeField] private MaterialColorWeight colorWeight = MaterialColorWeight._800;
 
         private IMaterialColorApplicable colorAdapter;
         private bool hasAppliedAtRuntime = false;
@@ -32,9 +37,15 @@ namespace MyFw
         private void InitializeAdapter()
         {
             // 優先度順でコンポーネントをチェック
-            if (TryGetComponent<Image>(out var image))
+            if (TryGetComponent<IColorSettable>(out var colorSettable))
             {
-                colorAdapter = new ImageColorAdapter(image);
+                colorAdapter = new ColorSettableAdapter(colorSettable);
+                return;
+            }
+
+            if (TryGetComponent<Graphic>(out var graphic))
+            {
+                colorAdapter = new GraphicColorAdapter(graphic);
                 return;
             }
 
@@ -43,7 +54,7 @@ namespace MyFw
                 colorAdapter = new SpriteRendererColorAdapter(spriteRenderer);
                 return;
             }
-            
+
             LogUtil.LogWarning($"MaterialDesignColorComponent: No supported component found on '{gameObject.name}'. Supported components: Image, SpriteRenderer, TextMeshProUGUI");
         }
 

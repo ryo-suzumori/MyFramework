@@ -3,9 +3,6 @@ using UnityEngine.UI;
 
 namespace MyFw
 {
-    // =====================================================
-    // 2. 色適用インターフェース
-    // =====================================================
     public interface IMaterialColorApplicable
     {
         void ApplyColor(Color color);
@@ -13,33 +10,46 @@ namespace MyFw
         string GetComponentName();
     }
 
-    // =====================================================
-    // 3. コンポーネントアダプター
-    // =====================================================
-    public class ImageColorAdapter : IMaterialColorApplicable
+    public class ColorSettableAdapter : IMaterialColorApplicable
     {
-        private readonly Image image;
+        private readonly IColorSettable settable;
 
-        public ImageColorAdapter(Image image)
+        public ColorSettableAdapter(IColorSettable settable)
         {
-            this.image = image;
+            this.settable = settable;
         }
 
         public void ApplyColor(Color color)
         {
-            if (image != null)
-                image.color = color;
+            if (settable != null)
+            {
+                settable.Color = new Color(color.r, color.g, color.b, settable.Color.a);
+            }
         }
 
-        public Color GetCurrentColor()
+        public Color GetCurrentColor() => settable != null ? settable.Color : Color.white;
+        public string GetComponentName() => "ColorSettable";
+    }
+
+    public class GraphicColorAdapter : IMaterialColorApplicable
+    {
+        private readonly Graphic graphic;
+
+        public GraphicColorAdapter(Graphic graphic)
         {
-            return image != null ? image.color : Color.white;
+            this.graphic = graphic;
         }
 
-        public string GetComponentName()
+        public void ApplyColor(Color color)
         {
-            return "Image";
+            if (graphic != null)
+            {
+                graphic.color = new Color(color.r, color.g, color.b, graphic.color.a);
+            }
         }
+
+        public Color GetCurrentColor() => graphic != null ? graphic.color : Color.white;
+        public string GetComponentName() => "Graphic";
     }
 
     public class SpriteRendererColorAdapter : IMaterialColorApplicable
@@ -54,17 +64,12 @@ namespace MyFw
         public void ApplyColor(Color color)
         {
             if (spriteRenderer != null)
+            {
                 spriteRenderer.color = color;
+            }
         }
 
-        public Color GetCurrentColor()
-        {
-            return spriteRenderer != null ? spriteRenderer.color : Color.white;
-        }
-
-        public string GetComponentName()
-        {
-            return "SpriteRenderer";
-        }
+        public Color GetCurrentColor() => spriteRenderer != null ? spriteRenderer.color : Color.white;
+        public string GetComponentName() => "SpriteRenderer";
     }
 }

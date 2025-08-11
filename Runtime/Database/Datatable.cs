@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Diagnostics;
 using UnityEngine;
 using UnityEngine.Assertions;
+
 
 namespace MyFw.DS
 {
@@ -24,32 +26,31 @@ namespace MyFw.DS
     {
     }
 
-    
     /// <summary>
     /// データテーブルクラス.
     ///
     /// // １行分データを定義 プロパティーでカラムを登録する.
-    /// public class SmapleDataRow : IDataRow
+    /// public class SampleDataRow : IDataRow
     /// {
     ///     public int Id { get; set; }
     ///     public int Value1 { get; set; }
     ///     public int Value2 { get; set; }
     /// }
     /// 
-    /// // SmapleClass、 ISmapleAccessor で公開する.
-    /// public class SmapleClass : Datatable<SmapleDataRow>, ISmapleAccessor
+    /// // SampleClass、 ISmapleAccessor で公開する.
+    /// public class SampleClass : Datatable<SampleDataRow>, ISmapleAccessor
     /// {
     ///     // CSVファイルパスを設定 Resources直下からのパス.
     ///     protected override string CsvPath => "Database/m_test";
     ///
     ///     // データ検索関数を定義.
-    ///     public SmapleDataRow GetByID(int id)
+    ///     public SampleDataRow GetByID(int id)
     ///         => this.dataList.FirstOrDefault(row => row.Id == id);
     /// }
     /// </summary>
-    /// <typeparam name="DataStructre">１行分のデータクラス</typeparam>
-    public abstract class Datatable<DataStructre> : IDatatable
-        where DataStructre : IDataRow, new()
+    /// <typeparam name="DataStructure">１行分のデータクラス</typeparam>
+    public abstract class Datatable<DataStructure> : IDatatable
+        where DataStructure : IDataRow, new()
     { 
         /// <summary>
         /// 読み込みcsvパス.
@@ -60,12 +61,12 @@ namespace MyFw.DS
         /// <summary>
         /// CSVファイル名.
         /// </summary>
-        public string CsvName => CsvPath.Substring(this.CsvPath.LastIndexOf("/", StringComparison.Ordinal)+1, this.CsvPath.Length - this.CsvPath.LastIndexOf("/", StringComparison.Ordinal)+1);
+        public string CsvName => CsvPath.Substring(this.CsvPath.LastIndexOf("/", StringComparison.Ordinal)+1);
 
         /// <summary>
         /// 読込済みデータ本体.
         /// </summary>
-        protected readonly List<DataStructre> dataList = new();
+        protected readonly List<DataStructure> dataList = new();
 
         /// <summary>
         /// コンストラクタ.
@@ -80,67 +81,57 @@ namespace MyFw.DS
         /// </summary>
         protected void LoadDatabaseFromCSV()
         {
-            Debug.Log($"load to {this.CsvPath}");
+            LogUtil.Log($"load from {this.CsvName}");
             var textAsset = LoadCSV();
             Assert.IsNotNull(textAsset, $"{this.CsvPath} is not found!!");
 
             var textData = textAsset.text.Replace("\"", "");
-            var splitedDataList = StringUtility.SplitFromCSVText(textData);
-            Assert.IsNotNull(splitedDataList, $"{this.CsvPath} is not CSV format!!");
+            var splitDataList = StringUtility.SplitFromCSVText(textData);
+            Assert.IsNotNull(splitDataList, $"{this.CsvPath} is not CSV format!!");
 
             var datatable = new DataTableContext();
-            datatable.SetHeader(splitedDataList[0]);
+            datatable.SetHeader(splitDataList[0]);
 
             var rowIdx = 0;
-            foreach(var rowData in splitedDataList.Skip(1))
+            foreach(var rowData in splitDataList.Skip(1))
             {
-                var dataStructre = new DataStructre();
-                var colmunIdx = 0;
-                foreach(var colmun in datatable.colmunContexts)
+                var dataStructure = new DataStructure();
+                var columnIdx = 0;
+                foreach(var column in datatable.columnContexts)
                 {
-                    if (string.IsNullOrEmpty(colmun.name))
+                    if (string.IsNullOrEmpty(column.name))
                     {
-                        ++colmunIdx;
+                        ++columnIdx;
                         continue;
                     }
 
-                    var feild = typeof(DataStructre).GetField(colmun.FieldName, BindingFlags.NonPublic | BindingFlags.Instance);
-                    switch (colmun.typeName)
+                    var field = typeof(DataStructure).GetField(column.FieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+                    switch (column.typeName)
                     {
                         case "IPercent":
-                            feild.SetValue(dataStructre, new Percent(Int32.TryParse(rowData[colmunIdx], out var retPercent) ? retPercent : 0));
+                            field.SetValue(dataStructure, new Percent(Int32.TryParse(rowData[columnIdx], out var retPercent) ? retPercent : 0));
                             break;
                         case "String":
-                            feild.SetValue(dataStructre, rowData[colmunIdx]);
+                            field.SetValue(dataStructure, rowData[columnIdx]);
                             break;
                         case "Boolean":
-                            feild.SetValue(dataStructre, Boolean.TryParse(rowData[colmunIdx], out var retBoolean) ? retBoolean : false);
+                            field.SetValue(dataStructure, Boolean.TryParse(rowData[columnIdx], out var retBoolean) ? retBoolean : false);
+                            break;
+                        case "Color":
+                            field.SetValue(dataStructure, ColorUtility.TryParseHtmlString("#"+rowData[columnIdx], out var retColor) ? retColor : Color.white);
                             break;
                         case "UInt32":
-                            feild.SetValue(dataStructre, UInt32.TryParse(rowData[colmunIdx], out var retUInt32) ? retUInt32 : 0);
+                            field.SetValue(dataStructure, UInt32.TryParse(rowData[columnIdx], out var retUInt32) ? retUInt32 : 0);
                             break;
                         case "Int32":
                         default:
-                            feild.SetValue(dataStructre, Int32.TryParse(rowData[colmunIdx], out var retOther) ? retOther : 0);
+                            field.SetValue(dataStructure, Int32.TryParse(rowData[columnIdx], out var retOther) ? retOther : 0);
                             break;
                     }
-                    ++colmunIdx;
+                    ++columnIdx;
                 }
-                this.dataList.Add(dataStructre);
+                this.dataList.Add(dataStructure);
                 ++rowIdx;
-            }
-        }
-
-        /// <summary>
-        /// 整合性チェック.
-        /// </summary>
-        /// <param name="splitedDataList"></param>
-        /// <param name="propertieList"></param>
-        private void Validation(IList<string[]> splitedDataList, PropertyInfo[] propertieList)
-        {
-            if (splitedDataList[0].Length != propertieList.Length)
-            {
-                throw new Exception($"colmun count is not match!! [{this.CsvPath}] csv:{splitedDataList[0].Length} class:{propertieList.Length}");
             }
         }
 
@@ -151,6 +142,18 @@ namespace MyFw.DS
         private TextAsset LoadCSV()
         {
             return Resources.Load(this.CsvPath) as TextAsset;
+        }
+
+        [Conditional("DEVELOPMENT_BUILD"), Conditional("UNITY_EDITOR")]
+        public void DumpTable()
+        {
+            LogUtil.Log($"Dump {this.CsvName} Table");
+            foreach (var data in this.dataList)
+            {
+                var properties = data.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                var values = properties.Select(p => p.GetValue(data, null)).ToArray();
+                LogUtil.Log(string.Join(", ", values));
+            }
         }
 
 #if DEBUG

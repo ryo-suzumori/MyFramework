@@ -12,7 +12,7 @@ namespace MyFw.Eff
     /// </summary>
     public interface ISpawner
     {
-        EffectAdapter Spwan(string key, Vector3 pos);
+        EffectAdapter Spawn(string key, Vector3 pos);
     }
 
     /// <summary>
@@ -44,7 +44,7 @@ namespace MyFw.Eff
         /// <param name="key"></param>
         /// <param name="pos"></param>
         /// <returns></returns>
-        public EffectAdapter Spwan(string key, Vector3 pos)
+        public EffectAdapter Spawn(string key, Vector3 pos)
         {
             var pool = this.poolFactory.FirstOrDefault(p => p.Key == key);
             if (pool == null)

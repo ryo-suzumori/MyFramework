@@ -44,6 +44,7 @@ namespace MyFw
             // namespace 設定
             var name = new CodeNamespace(context.nameSpace);
             name.Imports.Add(new CodeNamespaceImport("System"));
+            name.Imports.Add(new CodeNamespaceImport("UnityEngine"));
             name.Imports.Add(new CodeNamespaceImport("MyFw.DS"));
             compileUnit.Namespaces.Add(name);
 
@@ -64,7 +65,7 @@ namespace MyFw
             classType.BaseTypes.Add(new CodeTypeReference("I" + context.className));
 
             // プロパティの設定
-            foreach (var prop in context.colmunContexts)
+            foreach (var prop in context.columnContexts)
             {   
                 if (string.IsNullOrEmpty(prop.name))
                 {

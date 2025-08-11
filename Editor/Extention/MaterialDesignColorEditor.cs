@@ -4,12 +4,12 @@ using UnityEditor;
 
 namespace MyFw
 {
-    [CustomEditor(typeof(MaterialDesignColorComponent))]
-    public class MaterialDesignColorComponentEditor : Editor
+    [CustomEditor(typeof(MaterialDesignColor))]
+    public class MaterialDesignColorEditor : Editor
     {
         public override void OnInspectorGUI()
         {
-            MaterialDesignColorComponent component = (MaterialDesignColorComponent)target;
+            var component = (MaterialDesignColor)target;
 
             EditorGUI.BeginChangeCheck();
 

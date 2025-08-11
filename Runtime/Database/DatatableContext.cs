@@ -18,11 +18,11 @@ namespace MyFw
     {
         public string nameSpace;
         public string className;
-        public List<PropertyContext> colmunContexts;
+        public List<PropertyContext> columnContexts;
 
         public void SetHeader(string[] colmuns)
         {
-            this.colmunContexts = colmuns
+            this.columnContexts = colmuns
                 .Select(c => Regex.Match(c, @"(\w+?)\[(.*?)\]"))
                 .Select(m => new PropertyContext()
                 {

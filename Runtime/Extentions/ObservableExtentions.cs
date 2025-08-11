@@ -4,7 +4,7 @@ using UniRx;
 
 namespace MyFw
 {
-    public static class ObservableExtention
+    public static class ObservableExtension
     {
         /// <summary>
         /// 線形補間ストリームを作成.

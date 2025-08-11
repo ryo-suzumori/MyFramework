@@ -20,6 +20,11 @@ namespace MyFw
 
         public GameObjectType Spawn()
         {
+            if (this.Current == null || this.Next == null)
+            {
+                Setup();
+            }
+
             (this.Next, this.Current) = (this.Current, this.Next);
             return this.Current;
         }
