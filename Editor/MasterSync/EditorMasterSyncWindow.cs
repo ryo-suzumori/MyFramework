@@ -1,10 +1,11 @@
 using System.IO;
 using System.Text;
+using System.Collections.Generic;
+using System.Linq;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEditor;
-
 
 namespace MyFw
 {
@@ -12,7 +13,7 @@ namespace MyFw
     {
         private EditorMasterSyncConfig config;
 
-        [MenuItem("MFTools/MasterSync", false, 1)]
+        [MenuItem(EditorConstants.MFToolsRootMenuItem + "/MasterSync", false, 1)]
         private static void ShowWindow()
         {
             var window = GetWindow<EditorMasterSyncWindow>();
@@ -112,13 +113,36 @@ namespace MyFw
             if (request.result == UnityWebRequest.Result.ProtocolError)
             {
                 Debug.LogError($"{sheetName} : {request.error}");
+                return;
             }
-            else
+            
+            Debug.Log($"{sheetName} : sync");
+            var csvText = request.downloadHandler.text;
+            var lines = csvText.Split('\n');
+            if (lines.Length == 0)
+                return;
+
+            // 1行目（ヘッダー）を解析
+            var headers = lines[0].Split(',');
+            var includeIndices = new List<int>();
+            for (int i = 0; i < headers.Length; i++)
             {
-                Debug.Log($"{sheetName} : sync");
-                using var sw = new StreamWriter($"{outputDir}/{sheetName}.csv", false, Encoding.UTF8);
-                sw.Write(request.downloadHandler.text);
+                if (headers[i].Contains("[") && headers[i].Contains("]"))
+                {
+                    includeIndices.Add(i);
+                }
             }
+
+            var filteredLines = new List<string>();
+            foreach (var line in lines)
+            {
+                var cols = line.Split(',');
+                var filteredCols = includeIndices.Select(idx => idx < cols.Length ? cols[idx] : "").ToArray();
+                filteredLines.Add(string.Join(",", filteredCols));
+            }
+
+            using var sw = new StreamWriter($"{outputDir}/{sheetName}.csv", false, Encoding.UTF8);
+            sw.Write(string.Join("\n", filteredLines));
         }
     }
 }
