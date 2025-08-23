@@ -21,15 +21,15 @@ namespace MyFw
                 using var sr = new StreamReader(path, Encoding.UTF8);
                 var textBody = sr.ReadToEnd();
 
-                var splitedDataList = StringUtility.SplitFromCSVText(textBody);
-                Assert.IsNotNull(splitedDataList, $"{path} is not CSV format!!");
+                var splitDataList = StringUtility.SplitFromCSVText(textBody);
+                Assert.IsNotNull(splitDataList, $"{path} is not CSV format!!");
 
                 var datatable = new DataTableContext()
                 {
                     nameSpace = config.nameSpace,
                     className = sheetName,
                 };
-                datatable.SetHeader(splitedDataList[0]);
+                datatable.SetHeader(splitDataList[0]);
 
                 BuildClassFile(datatable);
                 Output(config.scriptDir);
@@ -45,6 +45,7 @@ namespace MyFw
             var name = new CodeNamespace(context.nameSpace);
             name.Imports.Add(new CodeNamespaceImport("System"));
             name.Imports.Add(new CodeNamespaceImport("UnityEngine"));
+            name.Imports.Add(new CodeNamespaceImport("MyFw"));
             name.Imports.Add(new CodeNamespaceImport("MyFw.DS"));
             compileUnit.Namespaces.Add(name);
 

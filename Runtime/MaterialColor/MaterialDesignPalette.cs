@@ -1,10 +1,32 @@
+using System;
 using UnityEngine;
 
 namespace MyFw
 {
+    [Serializable]
+    public class MaterialColorSet
+    {
+        [SerializeField] private MaterialColorKey colorKey;
+        [SerializeField] private MaterialColorWeight colorWeight;
+        public MaterialColorKey ColorKey => colorKey;
+        public MaterialColorWeight ColorWeight => colorWeight;
+        public Color Color => MaterialDesignPalette.GetColor(ColorKey, ColorWeight);
+
+        public MaterialColorSet(MaterialColorKey key, MaterialColorWeight weight)
+        {
+            SetColor(key, weight);
+        }
+
+        public void SetColor(MaterialColorKey key, MaterialColorWeight weight)
+        {
+            colorKey = key;
+            colorWeight = weight;
+        }
+    }
+
     public enum MaterialColorKey
     {
-        Red,
+        Red = 1,
         Pink,
         Purple,
         DeepPurple,
@@ -27,23 +49,25 @@ namespace MyFw
 
     public enum MaterialColorWeight
     {
-        _50 = 50,
-        _100 = 100,
-        _200 = 200,
-        _300 = 300,
-        _400 = 400,
-        _500 = 500,
-        _600 = 600,
-        _700 = 700,
-        _800 = 800,
-        _900 = 900
+        _50 = 1,
+        _100,
+        _200,
+        _300,
+        _400,
+        _500,
+        _600,
+        _700,
+        _800,
+        _900
     }
 
     public static class MaterialDesignPalette
     {
+        public static Color GetColor(MaterialColorSet colorSet)
+            => GetColor(colorSet.ColorKey, colorSet.ColorWeight);
+
         public static Color GetColor(MaterialColorKey color, MaterialColorWeight weight)
-        {
-            return color switch
+            => color switch
             {
                 MaterialColorKey.Red => GetRedColor(weight),
                 MaterialColorKey.Pink => GetPinkColor(weight),
@@ -66,7 +90,6 @@ namespace MyFw
                 MaterialColorKey.BlueGrey => GetBlueGreyColor(weight),
                 _ => Color.white,
             };
-        }
 
         private static Color GetRedColor(MaterialColorWeight weight)
             => weight switch
