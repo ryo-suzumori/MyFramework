@@ -18,14 +18,20 @@ namespace MyFw
         {
             var window = GetWindow<EditorMasterSyncWindow>();
             window.titleContent = new GUIContent("MasterSync Window");
+        }
 
-            var path = "Assets/Editor/EditorMasterSyncConfig.asset";
-            window.config = AssetDatabase.LoadAssetAtPath<EditorMasterSyncConfig>(path);
-
-            if (window.config == null)
+        private void OnEnable()
+        {
+            if (this.config == null)
             {
-                window.config = CreateInstance<EditorMasterSyncConfig>();
-                AssetDatabase.CreateAsset(window.config, path);
+                var path = "Assets/Editor/EditorMasterSyncConfig.asset";
+                this.config = AssetDatabase.LoadAssetAtPath<EditorMasterSyncConfig>(path);
+
+                if (this.config == null)
+                {
+                    this.config = CreateInstance<EditorMasterSyncConfig>();
+                    AssetDatabase.CreateAsset(this.config, path);
+                }
             }
         }
 

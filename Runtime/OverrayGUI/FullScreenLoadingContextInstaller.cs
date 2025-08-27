@@ -22,7 +22,7 @@ namespace MyFw
         /// <summary>
         /// 設定配列.
         /// </summary>
-        [SerializeField] private List<GameObject> popupPrefubList = new();
+        [SerializeField] private List<GameObject> popupPrefabList = new();
 
         /// <summary>
         /// インストール実行
@@ -32,9 +32,9 @@ namespace MyFw
             Container.DeclareSignal<FullScreenLoadingSignal>();
             Container.BindInterfacesTo<FullScreenLoadingHub>().FromNew().AsSingle().NonLazy();
 
-            foreach (var prefub in this.popupPrefubList)
+            foreach (var prefab in this.popupPrefabList)
             {
-                RegisterView(Container, prefub);
+                RegisterView(Container, prefab);
             }
         }
 
@@ -58,10 +58,10 @@ namespace MyFw
         public void Initialize()
         {
             this.signalBus
-                .Subscribe<FullScreenLoadingSignal>(Recive);
+                .Subscribe<FullScreenLoadingSignal>(Receive);
         }
 
-        public void Recive(FullScreenLoadingSignal signal)
+        public void Receive(FullScreenLoadingSignal signal)
         {
             var factory = this.factories.FirstOrDefault(f => f.Key == signal.key);
             LogUtil.Assert(factory != null, $"this key is not found. {signal.key}");
