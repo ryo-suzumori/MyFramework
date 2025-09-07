@@ -40,7 +40,7 @@ namespace MyFw
     public abstract class ObservableState<OwnerClass> : StateBase<OwnerClass>, IObservableState
         where OwnerClass : StateMachineV2<OwnerClass>
     {
-        public abstract TypeInfo NextState { get; }
+        public virtual TypeInfo NextState { get; }
 
         private readonly Subject<Unit> onEnter = new();
         public IObservable<Unit> OnEnterAsObservable => this.onEnter;
@@ -101,7 +101,12 @@ namespace MyFw
         }
 
         public void SwitchState(TypeInfo typeInfo)
-        { 
+        {
+            if (typeInfo == null)
+            {
+                LogUtil.LogWarning($"Switch state is null");
+                return;
+            }
             this.reserveState = typeInfo;
         }
 

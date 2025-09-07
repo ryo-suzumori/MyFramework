@@ -11,6 +11,12 @@ namespace MyFw
     {
         public string key;
         public IObservable<Unit> OnDestroy;
+
+        public FullScreenLoadingSignal(string key, IObservable<Unit> onDestroy = null)
+        {
+            this.key = key;
+            this.OnDestroy = onDestroy;
+        }
     }
 
     /// <summary>
@@ -75,12 +81,9 @@ namespace MyFw
             gui.transform.SetParent(canvas);
             gui.transform.localScale = Vector3.one;
 
-            if (signal.OnDestroy != null)
-            {
-                signal.OnDestroy
-                    .Subscribe(id => gui.DestroySelf())
-                    .AddTo(gui);
-            }
+            signal.OnDestroy
+                ?.Subscribe(id => gui.DestroySelf())
+                .AddTo(gui);
         }
     }
 }
