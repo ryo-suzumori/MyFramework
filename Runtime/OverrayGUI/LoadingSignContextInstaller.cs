@@ -4,49 +4,52 @@ using System.Collections.Generic;
 using UnityEngine;
 using UniRx;
 using Zenject;
+using Cysharp.Threading.Tasks;
 
 namespace MyFw
 {
-    public class FullScreenLoadingSignal
+    public class LoadingSignSignal
     {
         public string key;
         public IObservable<Unit> OnDestroy;
+        public bool isSkipOpen;
 
-        public FullScreenLoadingSignal(string key, IObservable<Unit> onDestroy = null)
+        public LoadingSignSignal(string key, bool isSkipOpen = false, IObservable<Unit> onDestroy = null)
         {
             this.key = key;
             this.OnDestroy = onDestroy;
+            this.isSkipOpen = isSkipOpen;
         }
     }
 
     /// <summary>
-    /// フルスクリーンローディングインストーラ
+    /// ローディングインストーラ
     /// </summary>
-    [CreateAssetMenu(fileName = "FullScreenLoadingContextInstaller", menuName = "Installers/FullScreenLoadingContextInstaller")]
-    public class FullScreenLoadingContextInstaller : ScriptableObjectInstaller
+    [CreateAssetMenu(fileName = "LoadingSignContextInstaller", menuName = "Installers/LoadingSignContextInstaller")]
+    public class LoadingSignContextInstaller : ScriptableObjectInstaller
     {
         /// <summary>
         /// 設定配列.
         /// </summary>
-        [SerializeField] private List<GameObject> popupPrefabList = new();
+        [SerializeField] private List<LoadingSignViewBase> prefabList = new();
 
         /// <summary>
         /// インストール実行
         /// </summary>
         public override void InstallBindings()
         {
-            Container.DeclareSignal<FullScreenLoadingSignal>();
-            Container.BindInterfacesTo<FullScreenLoadingHub>().FromNew().AsSingle().NonLazy();
+            Container.DeclareSignal<LoadingSignSignal>();
+            Container.BindInterfacesTo<LoadingSignHub>().FromNew().AsSingle().NonLazy();
 
-            foreach (var prefab in this.popupPrefabList)
+            foreach (var prefab in this.prefabList)
             {
                 RegisterView(Container, prefab);
             }
         }
 
-        private static void RegisterView(DiContainer diContainer, GameObject prefab)
+        private static void RegisterView(DiContainer diContainer, LoadingSignViewBase prefab)
         {
-            diContainer.BindFactory<FullScreenLoadingView, FullScreenLoadingViewFactory>()
+            diContainer.BindFactory<LoadingSignViewBase, LoadingSignViewFactory>()
                 .WithFactoryArguments(prefab.name)
                 .FromComponentInNewPrefab(prefab)
                 .AsCached();
@@ -56,18 +59,18 @@ namespace MyFw
     /// <summary>
     /// FullScreenLoadingHub
     /// </summary>
-    public class FullScreenLoadingHub : IInitializable
+    public class LoadingSignHub : IInitializable
     {
-        [Inject] private readonly SignalBus signalBus = default;
-        [Inject] private readonly IEnumerable<FullScreenLoadingViewFactory> factories;
+        [Inject] private readonly SignalBus signalBus;
+        [Inject] private readonly IEnumerable<LoadingSignViewFactory> factories;
 
         public void Initialize()
         {
             this.signalBus
-                .Subscribe<FullScreenLoadingSignal>(Receive);
+                .Subscribe<LoadingSignSignal>(signal => Receive(signal).Forget());
         }
 
-        public void Receive(FullScreenLoadingSignal signal)
+        public async UniTaskVoid Receive(LoadingSignSignal signal)
         {
             var factory = this.factories.FirstOrDefault(f => f.Key == signal.key);
             LogUtil.Assert(factory != null, $"this key is not found. {signal.key}");
@@ -81,9 +84,16 @@ namespace MyFw
             gui.transform.SetParent(canvas);
             gui.transform.localScale = Vector3.one;
 
+            if (signal.isSkipOpen)
+            {
+                gui.RequestSkipOpen();
+            }
+
             signal.OnDestroy
-                ?.Subscribe(id => gui.DestroySelf())
+                ?.Subscribe(id => gui.RequestClose())
                 .AddTo(gui);
+
+            await gui.UpdateTask();
         }
     }
 }
