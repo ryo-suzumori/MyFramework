@@ -44,14 +44,9 @@ namespace MyFw
         /// <returns></returns>
         public async UniTask UpdateTask()
         {
-            LogUtil.Log($"LoadingSignViewBase UpdateTask Start {this.gameObject.name}");
             this.isOpen = true;
-            
             await UniTask.WaitUntil(() => this.isOpen == false);
-            LogUtil.Log($"LoadingSignViewBase UpdateTask End {this.gameObject.name}");
             await Close();
-            
-            LogUtil.Log($"LoadingSignViewBase UpdateTask Destroy {this.gameObject.name}");
             // 自身を破棄
             Destroy(this.gameObject);
         }
