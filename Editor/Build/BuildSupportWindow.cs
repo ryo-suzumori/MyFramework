@@ -113,60 +113,81 @@ namespace MyFw
 
         private void Build(string fileName, bool isDevelopBuild, bool isStoreBuild)
         {
+            // 元のバンドルIDを保存
+            string originalBundleId = PlayerSettings.applicationIdentifier;
             
-            BuildOptions options = BuildOptions.None;
-            if (isDevelopBuild)
+            try
             {
-                options |= BuildOptions.Development;
-            }
+                // バンドルIDを一時的に変更
+                if (isDevelopBuild)
+                {
+                    PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, originalBundleId + ".dev");
+                    PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.iOS, originalBundleId + ".dev");
+                }
+                
+                BuildOptions options = BuildOptions.None;
+                if (isDevelopBuild)
+                {
+                    options |= BuildOptions.Development;
+                    options |= BuildOptions.AutoRunPlayer;
+                }
 
-            if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android)
-            {
-                if (isStoreBuild)
+                if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android)
                 {
-                    EditorUserBuildSettings.buildAppBundle = true;
-                    string aabPath = $"Builds/{fileName}.aab";
-                    var aabReport = BuildPipeline.BuildPlayer(GetScenes(), aabPath, BuildTarget.Android, options);
-                    if (aabReport.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
+                    if (isStoreBuild)
                     {
-                        EditorUtility.DisplayDialog("ビルド完了", $"Android AABビルド完了: {aabPath}", "OK");
+                        EditorUserBuildSettings.buildAppBundle = true;
+                        string aabPath = $"Builds/{fileName}.aab";
+                        var aabReport = BuildPipeline.BuildPlayer(GetScenes(), aabPath, BuildTarget.Android, options);
+                        if (aabReport.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
+                        {
+                            EditorUtility.DisplayDialog("ビルド完了", $"Android AABビルド完了: {aabPath}", "OK");
+                        }
+                        else
+                        {
+                            EditorUtility.DisplayDialog("エラー", $"Android AABビルド失敗: {aabReport.summary.result}", "OK");
+                        }
                     }
                     else
                     {
-                        EditorUtility.DisplayDialog("エラー", $"Android AABビルド失敗: {aabReport.summary.result}", "OK");
+                        EditorUserBuildSettings.buildAppBundle = false;
+                        string apkPath = $"Builds/{fileName}.apk";
+                        var apkReport = BuildPipeline.BuildPlayer(GetScenes(), apkPath, BuildTarget.Android, options);
+                        if (apkReport.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
+                        {
+                            EditorUtility.DisplayDialog("ビルド完了", $"Android APKビルド完了: {apkPath}", "OK");
+                        }
+                        else
+                        {
+                            EditorUtility.DisplayDialog("エラー", $"Android APKビルド失敗: {apkReport.summary.result}", "OK");
+                        }
+                    }
+                }
+                else if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.iOS)
+                {
+                    string iosPath = $"Builds/{fileName}_iOS";
+                    var report = BuildPipeline.BuildPlayer(GetScenes(), iosPath, BuildTarget.iOS, options);
+                    if (report.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
+                    {
+                        EditorUtility.DisplayDialog("ビルド完了", $"iOSビルド完了: {iosPath}", "OK");
+                    }
+                    else
+                    {
+                        EditorUtility.DisplayDialog("エラー", $"iOSビルド失敗: {report.summary.result}", "OK");
                     }
                 }
                 else
                 {
-                    EditorUserBuildSettings.buildAppBundle = false;
-                    string apkPath = $"Builds/{fileName}.apk";
-                    var apkReport = BuildPipeline.BuildPlayer(GetScenes(), apkPath, BuildTarget.Android, options);
-                    if (apkReport.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
-                    {
-                        EditorUtility.DisplayDialog("ビルド完了", $"Android APKビルド完了: {apkPath}", "OK");
-                    }
-                    else
-                    {
-                        EditorUtility.DisplayDialog("エラー", $"Android APKビルド失敗: {apkReport.summary.result}", "OK");
-                    }
+                    EditorUtility.DisplayDialog("エラー", "AndroidまたはiOSプラットフォームを選択してください", "OK");
                 }
             }
-            else if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.iOS)
+            finally
             {
-                string iosPath = $"Builds/{fileName}_iOS";
-                var report = BuildPipeline.BuildPlayer(GetScenes(), iosPath, BuildTarget.iOS, options);
-                if (report.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
-                {
-                    EditorUtility.DisplayDialog("ビルド完了", $"iOSビルド完了: {iosPath}", "OK");
-                }
-                else
-                {
-                    EditorUtility.DisplayDialog("エラー", $"iOSビルド失敗: {report.summary.result}", "OK");
-                }
-            }
-            else
-            {
-                EditorUtility.DisplayDialog("エラー", "AndroidまたはiOSプラットフォームを選択してください", "OK");
+                // 必ず元のバンドルIDに戻す
+                PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, originalBundleId);
+                PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.iOS, originalBundleId);
+                
+                AssetDatabase.SaveAssets();
             }
         }
 
