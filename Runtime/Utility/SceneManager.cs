@@ -20,7 +20,7 @@ namespace MyFw
             SceneManager.SetActiveScene(SceneManager.GetSceneByName(sceneName));
         }
 
-        public async UniTask<Scene> LoadSceneAddtiveAsync(string sceneName)
+        public async UniTask<Scene> LoadSceneAdditiveAsync(string sceneName)
         {
             // シーンを非同期で読み込む
             await SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single).ToUniTask();
