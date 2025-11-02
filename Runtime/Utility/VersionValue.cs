@@ -8,7 +8,7 @@ namespace MyFw
         public readonly int minor;
         public readonly int patch;
 
-        public VersionValue(string versionString)
+        public VersionValue(string versionString = "")
         {
             if (string.IsNullOrEmpty(versionString))
             {
@@ -20,6 +20,8 @@ namespace MyFw
             this.minor = int.TryParse(versionParts[1], out var v1) ? v1 : 0;
             this.patch = int.TryParse(versionParts[2], out var v2) ? v2 : 0;
         }
+
+        public override string ToString() => $"{this.major}.{this.minor}.{this.patch}";
 
         public int CompareTo(VersionValue other)
         {
@@ -38,7 +40,5 @@ namespace MyFw
 
             return this.patch.CompareTo(other.patch);
         }
-
-        public override string ToString() => $"{this.major}.{this.minor}.{this.patch}";
     }
 }

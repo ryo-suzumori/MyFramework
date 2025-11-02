@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using System.Linq;
+using UnityEditor.Build;
 
 namespace MyFw
 {
@@ -121,8 +122,8 @@ namespace MyFw
                 // バンドルIDを一時的に変更
                 if (isDevelopBuild)
                 {
-                    PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, originalBundleId + ".dev");
-                    PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.iOS, originalBundleId + ".dev");
+                    PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, originalBundleId + ".dev");
+                    PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.iOS, originalBundleId + ".dev");
                 }
                 
                 BuildOptions options = BuildOptions.None;
@@ -184,8 +185,8 @@ namespace MyFw
             finally
             {
                 // 必ず元のバンドルIDに戻す
-                PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, originalBundleId);
-                PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.iOS, originalBundleId);
+                PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, originalBundleId);
+                PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.iOS, originalBundleId);
                 
                 AssetDatabase.SaveAssets();
             }
