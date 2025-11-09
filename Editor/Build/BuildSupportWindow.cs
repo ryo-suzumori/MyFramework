@@ -2,6 +2,9 @@ using UnityEditor;
 using UnityEngine;
 using System.Linq;
 using UnityEditor.Build;
+using UnityEditor.Build.Reporting;
+using System;
+using System.IO;
 
 namespace MyFw
 {
@@ -10,6 +13,7 @@ namespace MyFw
         private int versionCode;
         private string version;
         private string productName;
+        private KeystoreInfo keystoreInfo;
 
         [MenuItem(EditorConstants.MFToolsRootMenuItem + "/Build Support")]
         public static void ShowWindow()
@@ -22,6 +26,7 @@ namespace MyFw
             versionCode = GetVersionCode();
             version = PlayerSettings.bundleVersion;
             productName = PlayerSettings.productName;
+            keystoreInfo = BuildConfigLoader.LoadKeystoreConfigByProjectName();
         }
 
         private void OnGUI()
@@ -73,29 +78,43 @@ namespace MyFw
                 SettingsService.OpenProjectSettings("Project/Player");
             }
 
-
             GUILayout.Space(20);
             GUILayout.Label("ビルドショートカット", EditorStyles.boldLabel);
 
-            if (GUILayout.Button("ローカルテストビルド"))
+            if (GUILayout.Button("ローカル開発ビルド＆実行"))
             {
-                Build($"{productName}_dev_{versionCode}", true, false);
+                Build($"{productName}_dev_{versionCode}", true, false, true);
             }
-            if (GUILayout.Button("ストアテストビルド"))
+            if (GUILayout.Button("ログ有効版リリースビルド"))
             {
-                Build($"{productName}_stg_{versionCode}", true, true);
+                Build($"{productName}_stg_{versionCode}", true, true, true);
             }
             if (GUILayout.Button("リリースビルド"))
             {
-                Build($"{productName}_rel_{versionCode}", false, true);
+                Build($"{productName}_rel_{versionCode}", false, true, false);
+            }
+
+            GUILayout.Space(20);
+            DrawStatusLine("Build config file", BuildConfigLoader.ConfigExists);
+            DrawStatusLine("Keystore info from build config", keystoreInfo != null);
+
+            var keystoreExist = keystoreInfo != null && File.Exists(keystoreInfo.keystorePath);
+            DrawStatusLine("Keystore file exist", keystoreExist);
+            if (!keystoreExist)
+            {
+                EditorGUILayout.HelpBox($"こちらのパスを参照しましたが見つかりませんでした。[{keystoreInfo?.keystorePath}]", MessageType.Error);
+            }
+            if (GUILayout.Button("Reload Build Config"))
+            {
+                keystoreInfo = BuildConfigLoader.LoadKeystoreConfigByProjectName();
+                EditorUtility.DisplayDialog("Keystore情報", "Keystore情報をリロードしました", "OK");
             }
         }
 
         private int GetVersionCode()
         {
             int androidCode = PlayerSettings.Android.bundleVersionCode;
-            int iosCode = 0;
-            int.TryParse(PlayerSettings.iOS.buildNumber, out iosCode);
+            int.TryParse(PlayerSettings.iOS.buildNumber, out int iosCode);
             return Mathf.Max(androidCode, iosCode);
         }
 
@@ -112,35 +131,44 @@ namespace MyFw
             AssetDatabase.SaveAssets();
         }
 
-        private void Build(string fileName, bool isDevelopBuild, bool isStoreBuild)
+        private void Build(string fileName, bool isBuildAndRun, bool isStoreBuild, bool useForceLog)
         {
             // 元のバンドルIDを保存
-            string originalBundleId = PlayerSettings.applicationIdentifier;
-            
+            var originalBundleId = PlayerSettings.applicationIdentifier;
+            var currentTarget = NamedBuildTarget.FromBuildTargetGroup(
+                EditorUserBuildSettings.selectedBuildTargetGroup
+            );
+
             try
             {
                 // バンドルIDを一時的に変更
-                if (isDevelopBuild)
+                if (isBuildAndRun)
                 {
-                    PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, originalBundleId + ".dev");
-                    PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.iOS, originalBundleId + ".dev");
+                    PlayerSettings.SetApplicationIdentifier(currentTarget, originalBundleId + ".dev");
                 }
                 
                 BuildOptions options = BuildOptions.None;
-                if (isDevelopBuild)
+                if (isBuildAndRun)
                 {
                     options |= BuildOptions.Development;
                     options |= BuildOptions.AutoRunPlayer;
                 }
 
+                // 強制ログ有効フラグの設定
+                var defineEditor = new ScriptingDefineSymbolsEditor(currentTarget);
+                defineEditor.Register("USE_FORCE_LOG", useForceLog);
+                defineEditor.Apply();
+
                 if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android)
                 {
+                    SetKeystoreFromEnvironment();
+
                     if (isStoreBuild)
                     {
                         EditorUserBuildSettings.buildAppBundle = true;
                         string aabPath = $"Builds/{fileName}.aab";
                         var aabReport = BuildPipeline.BuildPlayer(GetScenes(), aabPath, BuildTarget.Android, options);
-                        if (aabReport.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
+                        if (aabReport.summary.result == BuildResult.Succeeded)
                         {
                             EditorUtility.DisplayDialog("ビルド完了", $"Android AABビルド完了: {aabPath}", "OK");
                         }
@@ -154,7 +182,7 @@ namespace MyFw
                         EditorUserBuildSettings.buildAppBundle = false;
                         string apkPath = $"Builds/{fileName}.apk";
                         var apkReport = BuildPipeline.BuildPlayer(GetScenes(), apkPath, BuildTarget.Android, options);
-                        if (apkReport.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
+                        if (apkReport.summary.result == BuildResult.Succeeded)
                         {
                             EditorUtility.DisplayDialog("ビルド完了", $"Android APKビルド完了: {apkPath}", "OK");
                         }
@@ -168,7 +196,7 @@ namespace MyFw
                 {
                     string iosPath = $"Builds/{fileName}_iOS";
                     var report = BuildPipeline.BuildPlayer(GetScenes(), iosPath, BuildTarget.iOS, options);
-                    if (report.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
+                    if (report.summary.result == BuildResult.Succeeded)
                     {
                         EditorUtility.DisplayDialog("ビルド完了", $"iOSビルド完了: {iosPath}", "OK");
                     }
@@ -185,9 +213,7 @@ namespace MyFw
             finally
             {
                 // 必ず元のバンドルIDに戻す
-                PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, originalBundleId);
-                PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.iOS, originalBundleId);
-                
+                PlayerSettings.SetApplicationIdentifier(currentTarget, originalBundleId);
                 AssetDatabase.SaveAssets();
             }
         }
@@ -198,6 +224,29 @@ namespace MyFw
                 .Where(s => s.enabled)
                 .Select(s => s.path)
                 .ToArray();
+        }
+
+        private void SetKeystoreFromEnvironment()
+        {
+            if (keystoreInfo == null)
+            {
+                Debug.LogWarning("Keystore information is not available. Skipping keystore setup.");
+                return;
+            }
+
+            PlayerSettings.Android.useCustomKeystore = true;
+            PlayerSettings.Android.keystoreName = keystoreInfo.keystorePath;
+            PlayerSettings.Android.keystorePass = keystoreInfo.keystorePass;
+            PlayerSettings.Android.keyaliasName = keystoreInfo.keyaliasName;
+            PlayerSettings.Android.keyaliasPass = keystoreInfo.keyaliasPass;
+        }
+        private void DrawStatusLine(string label, bool isValid)
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                GUILayout.Label(EditorGUIUtility.IconContent(isValid ? "TestPassed" : "TestFailed"), GUILayout.Width(20));
+                GUILayout.Label(label);
+            }
         }
     }
 }
